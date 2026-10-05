@@ -2457,6 +2457,58 @@ importers:
         specifier: workspace:*
         version: link:../image-transform
 
+  packages/provider-kie:
+    dependencies:
+      '@hypit/endpoint-kit':
+        specifier: workspace:*
+        version: link:../endpoint-kit
+      '@hypit/generation':
+        specifier: workspace:*
+        version: link:../generation
+      '@hypit/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@hypit/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+      '@hypit/runtime-kit':
+        specifier: workspace:*
+        version: link:../runtime-kit
+    devDependencies:
+      '@hypit/artifact':
+        specifier: workspace:*
+        version: link:../artifact
+      '@hypit/background-removal':
+        specifier: workspace:*
+        version: link:../background-removal
+      '@hypit/driver-node':
+        specifier: workspace:*
+        version: link:../driver-node
+      '@hypit/gpt-image':
+        specifier: workspace:*
+        version: link:../gpt-image
+      '@hypit/grok-imagine':
+        specifier: workspace:*
+        version: link:../grok-imagine
+      '@hypit/minimax-h3':
+        specifier: workspace:*
+        version: link:../minimax-h3
+      '@hypit/nano-banana':
+        specifier: workspace:*
+        version: link:../nano-banana
+      '@hypit/pixverse':
+        specifier: workspace:*
+        version: link:../pixverse
+      '@hypit/seedance':
+        specifier: workspace:*
+        version: link:../seedance
+      '@hypit/seedream':
+        specifier: workspace:*
+        version: link:../seedream
+      '@hypit/wan':
+        specifier: workspace:*
+        version: link:../wan
+
   packages/provider-media-local:
     dependencies:
       '@hypit/artifact':

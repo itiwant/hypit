@@ -1,0 +1,29 @@
+{
+  "name": "@hypit/provider-kie",
+  "version": "0.0.0-dev",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "hypit": { "activation": "./src/activation.ts" },
+  "dependencies": {
+    "@hypit/endpoint-kit": "workspace:*",
+    "@hypit/generation": "workspace:*",
+    "@hypit/protocol": "workspace:*",
+    "@hypit/runtime": "workspace:*",
+    "@hypit/runtime-kit": "workspace:*"
+  },
+  "devDependencies": {
+    "@hypit/artifact": "workspace:*",
+    "@hypit/background-removal": "workspace:*",
+    "@hypit/driver-node": "workspace:*",
+    "@hypit/gpt-image": "workspace:*",
+    "@hypit/grok-imagine": "workspace:*",
+    "@hypit/minimax-h3": "workspace:*",
+    "@hypit/nano-banana": "workspace:*",
+    "@hypit/pixverse": "workspace:*",
+    "@hypit/seedance": "workspace:*",
+    "@hypit/seedream": "workspace:*",
+    "@hypit/wan": "workspace:*"
+  }
+}

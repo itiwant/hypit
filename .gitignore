@@ -72,3 +72,6 @@ examples/**/.svml/
 
 # Reverse-engineering scratch projects live outside the repository too
 /projects/*
+
+# pnpm's local content-addressable store (auto-created in-workspace when the store drive differs) 
+/.pnpm-store/
