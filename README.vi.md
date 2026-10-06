@@ -214,6 +214,7 @@ flowchart LR
 | **HypiHub** ⭐ (khuyên dùng) | `@hypit/provider-hypihub` | Dịch vụ hosted tích hợp: sinh ảnh, sinh video, giọng nói và WhisperX qua **một tài khoản** | Đăng nhập (`hypit auth login`) |
 | **TokenDance** | `@hypit/provider-tokendance` | Seedance 2.0/2.5, Seedream 5.0 lite, MiniMax H3 (giao thức Ark + MiniMax) | API key (BYOK) |
 | **HiAPI** | `@hypit/provider-hiapi` | Seedance, Seedream 5.0 lite, MiniMax H3, GPT Image 2, Nano Banana, Grok Imagine | API key (BYOK) |
+| **Kie.ai** | `@hypit/provider-kie` | 16 capability qua Market API của Kie: Seedance 2/2-fast/2-mini/2.5, MiniMax H3, Grok Imagine (video + 1.5 preview), PixVerse V6, GPT Image 2, Nano Banana 2/Pro, Seedream 5 Lite, Wan 2.7 Image/Pro + xoá nền (`remove-background`) | API key (BYOK) |
 | **Pollo** | `@hypit/provider-pollo` | MiniMax H3, Grok Imagine 1.5, GPT Image 2, Nano Banana — media tham chiếu phải là **URL công khai** | API key (BYOK) |
 | **BeatAPI** | `@hypit/provider-beatapi` | Seedance 2.0/2.5, MiniMax H3, Grok Imagine 1.5, GPT Image 2, Nano Banana (có upload media tham chiếu) | API key (BYOK) |
 | **Monid** | `@hypit/provider-monid` | Seedance 2.0/2.5, MiniMax H3, ảnh Wan 2.7; mở rộng tool khác qua HTTP API của Monid | API key (BYOK) |
@@ -262,8 +263,9 @@ Bảng tổng hợp: muốn tính năng nào thì cần chuẩn bị gì.
 |---|---|---|
 | Cài Skill + CLI cơ bản | **Node.js 22.15+**, npm/npx | — |
 | Clone video từ link nền tảng | `yt-dlp` (đi kèm hệ sinh thái) | Tự tải video về tệp |
-| Tạo video bằng AI (Seedance, MiniMax H3, Wan…) | Tài khoản **HypiHub** *hoặc* key của TokenDance/HiAPI/Pollo/BeatAPI/Monid *hoặc* deployment riêng | Model `mini`/`fast` rẻ hơn `standard`/`2.5` |
+| Tạo video bằng AI (Seedance, MiniMax H3, Wan…) | Tài khoản **HypiHub** *hoặc* key của TokenDance/HiAPI/Pollo/BeatAPI/Monid/**Kie.ai** *hoặc* deployment riêng | Model `mini`/`fast` rẻ hơn `standard`/`2.5` |
 | Tạo ảnh bằng AI (GPT Image 2, Nano Banana, Grok Imagine, Seedream) | Như trên (tùy model mỗi dịch vụ hỗ trợ) | Có thể bỏ, chỉ dùng ảnh tự chuẩn bị |
+| Xoá nền ảnh (remove-background) | Kie.ai (`@hypit/provider-kie`, model `recraft/remove-background`) | Không dùng thì tự chỉnh ảnh nền trong suốt |
 | Giọng nói / nhân vật nói (TTS) | HypiHub *hoặc* ElevenLabs / FishAudio / MiMo *hoặc* audio thu sẵn | `generate-audio="true"` của Seedance tự sinh tiếng |
 | Transcribe + align cấp từ (caption karaoke, graphic bám từ) | **WhisperX local**: Python 3.10–3.13 + `uv` + tải model weights | *hoặc* WhisperX hosted trên **HypiHub** |
 | Xử lý media (trim, tách, chuẩn hoá take) | **`ffmpeg` + `ffprobe`** trên `PATH` | Endpoint media tương thích khác |
@@ -395,6 +397,118 @@ Credential theo biến môi trường thì set trong môi trường của Worker
 ```bash
 hypit packages install @fontsource-variable/inter@5.3.0
 ```
+
+### 7. Kết nối Kie.ai qua `@hypit/provider-kie` (provider mới)
+
+`@hypit/provider-kie` là một Provider BYOK qua **Kie.ai Market API**. Một package phục vụ **16 capability**:
+
+- **Video:** Seedance 2 / 2-fast / 2-mini / 2.5, MiniMax H3, Grok Imagine (`grok-imagine-video` + bản `1.5-preview`), PixVerse V6 (text-to-video, image-to-video, Fusion/reference-to-video, transition first–last frame).
+- **Ảnh:** GPT Image 2 (text/image-to-image), Nano Banana 2 & Pro, Seedream 5 Lite, Wan 2.7 Image & Pro.
+- **Xoá nền:** `@hypit/background-removal#remove-background` (model `recraft/remove-background`, PNG/JPEG/WEBP ≤ 5 MB).
+
+Mọi field name, enum và giới hạn byte đều đối chiếu trực tiếp từng trang `docs.kie.ai/market/...`;
+chi tiết kỹ thuật nằm trong [packages/provider-kie/README.md](./packages/provider-kie/README.md).
+
+**Ba bước cài:**
+
+1. Lấy API key: đăng nhập tại [kie.ai](https://kie.ai), tạo key trong dashboard của bạn.
+2. Khai báo Endpoint trong `hypit.runtime.json` (cấu hình tối thiểu chỉ cần `use` + `apiKey`;
+   các option còn lại đều có giá trị mặc định):
+
+   ```json
+   "endpoints": {
+     "kie": {
+       "use": "@hypit/provider-kie",
+       "config": {
+         "apiKey": { "store": "env", "key": "KIE_API_KEY" },
+         "pollIntervalMs": 5000,
+         "requestTimeoutMs": 300000,
+         "operationTimeoutMs": 900000
+       }
+     }
+   }
+   ```
+
+   `store` có thể là `env` (đọc biến môi trường), `os` (Credential Manager của hệ điều hành) hoặc
+   store khác mà Runtime cài sẵn (`credential-store-env/-file/-os/-platform`). Key chỉ là *tham chiếu*,
+   không bao giờ nằm trong file commit.
+
+3. Đặt secret và kiểm tra:
+
+   ```bash
+   # cách 1 — store env: Worker đọc biến môi trường khi khởi động
+   export KIE_API_KEY="key-của-bạn"
+   # cách 2 — nhập qua credential-input mà Provider khai báo
+   hypit auth login kie
+
+   hypit doctor --endpoint kie      # kiểm tra credential (chỉ sự hiện diện, không in giá trị)
+   ```
+
+   Khi chạy trong repo Hypit bằng `pnpm`, nhớ đặt `COREPACK_HOME` vào thư mục tạm
+   (`$env:COREPACK_HOME = Join-Path $env:TEMP "corepack-home"` trên PowerShell) để tránh lỗi
+   quyền khi corepack tạo cache.
+
+**Kie Provider vận hành thế nào:**
+
+- **Checkpoint-first:** mỗi task được checkpoint `taskId` ngay sau `createTask` — Runtime có thể
+  resume mà không nộp lại task (không tốn thêm credit).
+- **Upload media tự động:** media tham chiếu (ảnh/video/âm thanh) được upload qua API File Upload
+  của Kie (base64 ≤ 10 MB, stream > 10 MB) và kiểm tra giới hạn MB theo từng model trước khi nộp.
+- **Luật từ chối theo docs:** các vế Kie hẹp hơn bề mặt model (ví dụ GPT Image 2: aspect `auto`
+  chỉ được 1K, 2K cấm `5:4/4:5/3:1/1:3/9:21`, 4K cấm `1:1/3:1/1:3/9:21`, background chỉ ở 1K;
+  Wan 2.7: 4K chỉ text-to-image Standard Mode; PixVerse: frame và Fusion tách route, aspect bắt
+  buộc ngoài transition) — Provider từ chối ngay ở `supports()` kèm lý do, không tự sửa request.
+- **Chi phí:** `hypit pricing` đọc credit còn lại qua `/api/v1/chat/credit` của Kie (tài khoản Kie
+  tính riêng theo credit của nó, không nằm trong gói HypiHub).
+
+### 8. WhisperX local — caption bám từ (Word-level)
+
+Một số tính năng full của Hypit (caption karaoke, chèn b-roll đúng từ, highlight chữ theo lời
+nói) cần word-timing chuẩn từ WhisperX. Cài như sau:
+
+1. Yêu cầu máy: **Python 3.10–3.13** và [uv](https://docs.astral.sh/uv/). RAM vừa đủ cho lần
+   đầu tải model (model `small` cỡ vài trăm MB; `large-v3` cỡ vài GB).
+2. Khai báo trong `hypit.runtime.json`:
+
+   ```json
+   "whisperx.local": {
+     "use": "@hypit/provider-whisperx-local",
+     "config": {
+       "expectedModel": "small",
+       "expectedDevice": "cpu",
+       "expectedCompute": "int8",
+       "expectedBatchSize": 8,
+       "alignmentLanguages": ["en"]
+     }
+   }
+   ```
+
+   `alignmentLanguages` chọn bộ weights align theo ngôn ngữ cần dùng (ví dụ `["en"]`, hoặc thêm
+   mã khác WhisperX hỗ trợ cho production của bạn). `expectedDevice`/`expectedCompute` đổi cho
+   GPU nếu có (ví dụ `cuda` + `float16`).
+3. Chuẩn bị + chạy qua CLI (nó tự `uv sync` từ lockfile, tải weights ASR + weights align + dữ liệu
+   câu NLTK, rồi giữ service ấm trên loopback `127.0.0.1:8765`):
+
+   ```bash
+   hypit programs prepare --endpoint whisperx.local
+   hypit programs up      --endpoint whisperx.local
+   curl http://127.0.0.1:8765/health   # kiểm tra service
+   ```
+
+   Trên Windows, các lệnh chẩn đoán của contributor dùng
+   `services\whisperx\.venv\Scripts\hypit-whisperx-prepare.exe` (bản POSIX là `.venv/bin/hypit-whisperx-*`).
+4. Nếu đứng sau proxy tin cậy và chuẩn bị bị kẹt ở bước NLTK:
+
+   ```bash
+   NLTK_ALLOW_PROXIED_URLOPEN=1 hypit programs prepare --endpoint whisperx.local
+   ```
+
+   (PowerShell: `$env:NLTK_ALLOW_PROXIED_URLOPEN = "1"` cho phiên chuẩn bị đó rồi trả giá trị cũ.)
+
+Lưu ý: service chỉ nhận WAV 16 kHz mono s16 đã được pipeline media dựng chuẩn — nó không tự ffmpeg
+lại; Provider `@hypit/provider-whisperx-local` kiểm đúng model/device/compute/batch size qua `/health`
+trước khi nhận một công việc nào. Tham chiếu đầy đủ: [services/whisperx/README.md](./services/whisperx/README.md)
+và [packages/provider-whisperx-local/README.md](./packages/provider-whisperx-local/README.md).
 
 ---
 
