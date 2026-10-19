@@ -7,9 +7,9 @@ import {
   sealGeneratedVideoSet,
 } from "@hypit/generation";
 import type { GenerationArtifactUrlResolver, GenerationRequest, GenerationWireMapping } from "@hypit/generation";
-import { canonicalize } from "@hypit/protocol";
-import type { BlobRef, CapabilityRef, CanonicalValue, StoredValue, TypeRef } from "@hypit/protocol";
-import type { EndpointRequest, EndpointSupport } from "@hypit/endpoint-kit";
+import { canonicalize } from "@hypit/hypit/protocol";
+import type { BlobRef, CapabilityRef, CanonicalValue, StoredValue, TypeRef } from "@hypit/hypit/protocol";
+import type { EndpointRequest, EndpointSupport } from "@hypit/hypit/endpoint";
 import { hypiHubMappings } from "./mapping.js";
 
 export type HypiHubModelOperation = "images" | "image_edits" | "videos" | "audio_speech" | "transcriptions";
