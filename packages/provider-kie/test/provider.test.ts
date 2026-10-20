@@ -3,7 +3,7 @@ import test from "node:test";
 import { verifyGeneratedVideoSet } from "@hypit/generation";
 import type {
   AsyncEndpoint, EndpointRegistrar, EndpointStartContext,
-} from "@hypit/endpoint-kit";
+} from "@hypit/endpoint";
 import type { BlobRef, CanonicalValue } from "@hypit/protocol";
 import { canonicalize } from "@hypit/protocol";
 import type { ResourceStore } from "@hypit/runtime";
@@ -98,12 +98,14 @@ function makeStore(bytes: Uint8Array) {
 function makeContext(server: ReturnType<typeof makeServer>, store: ResourceStore, constraints: CanonicalValue) {
   void server;
   const checkpoints: Record<string, unknown>[] = [];
+  const need = {
+    id: "need_kie_1", capability, returns: { module: { name: "@hypit/generation", version: "1" }, name: "GeneratedVideoSet" },
+    constraints, result: "result_kie_1",
+  };
   const context: Partial<EndpointStartContext> & Pick<EndpointStartContext, "operation"> = {
     operation: "op_kie_1",
-    need: {
-      id: "need_kie_1", capability, returns: { module: { name: "@hypit/generation", version: "1" }, name: "GeneratedVideoSet" },
-      constraints, result: "result_kie_1",
-    },
+    command: { kind: "fulfill-need", id: "command_kie_1", need },
+    need,
     resources: store,
     credentials: { apiKey: { secret: SERVICE_KEY } },
     reportProgress: async () => {},

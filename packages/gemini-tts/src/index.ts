@@ -1,4 +1,4 @@
-import { defineExactModelModule } from "@hypit/model-kit";
+import { defineExactModelModule } from "@hypit/generation/model";
 import type { GenerationPortValue, GenerationRequest, GenerationRequestDraft } from "@hypit/generation";
 
 import {
@@ -86,7 +86,7 @@ const geminiTtsDefinition = defineExactModelModule({
 
 export const geminiTtsEndpoints = geminiTtsDefinition.endpoints;
 export const geminiTtsComponent = geminiTtsDefinition.component;
-export const geminiTtsHostFacet = geminiTtsDefinition.hostFacet;
+export const geminiTtsFacet = geminiTtsDefinition.facet;
 export const geminiTtsManifest = geminiTtsDefinition.manifest;
 
 const sealByModel = {

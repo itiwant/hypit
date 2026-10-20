@@ -1,6 +1,6 @@
 {
   "name": "@hypit/gemini-tts",
-  "version": "0.0.0-dev",
+  "version": "0.2.0",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,
   "type": "module",
@@ -10,10 +10,20 @@
   "hypit": {
     "activation": "./src/activation.ts"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "@hypit/hypit": "workspace:^0.3.1"
+  },
   "dependencies": {
-    "@hypit/artifact": "workspace:*",
+    "@hypit/generation": "workspace:^0.1.0"
+  },
+  "devDependencies": {
+    "@hypit/blob": "workspace:*",
     "@hypit/generation": "workspace:*",
-    "@hypit/model-kit": "workspace:*",
+    "@hypit/hypit": "workspace:*",
     "@hypit/protocol": "workspace:*",
     "@hypit/text": "workspace:*"
   }

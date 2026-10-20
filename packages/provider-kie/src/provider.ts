@@ -1,19 +1,15 @@
-import { requestDeadline } from "@hypit/runtime-kit";
 import type {
-  AsyncEndpoint, EndpointCredential, EndpointInvocationContext, EndpointOutcome,
+  AsyncEndpoint, EndpointCredential, EndpointOutcome,
   EndpointRequest, EndpointStartContext, EndpointSupport,
-} from "@hypit/endpoint-kit";
-import { EndpointTransportError } from "@hypit/endpoint-kit";
-import {
-  defineEndpointPackage, pollAgainOrFail, wakeAfter,
-} from "@hypit/endpoint-kit";
-import { artifactTypes } from "@hypit/artifact";
-import { canonicalize } from "@hypit/protocol";
-import type { BlobRef,CapabilityRef, CanonicalValue } from "@hypit/protocol";
-import { credentialRef } from "@hypit/runtime";
-import { textTypes } from "@hypit/text";
+} from "@hypit/hypit/endpoint";
+import { credentialRef, defineEndpoint, wakeAfter } from "@hypit/hypit/endpoint";
+import { EndpointHttpError, EndpointTransportError, withRequestDeadline } from "@hypit/hypit/endpoint/http";
+import { blobTypes } from "@hypit/hypit/blob";
+import { canonicalize } from "@hypit/hypit/protocol";
+import type { BlobRef,CapabilityRef, CanonicalValue } from "@hypit/hypit/protocol";
+import { textTypes } from "@hypit/hypit/text";
 import type { CreateKieProviderOptions } from "./options.js";
-import { kieProviderDefaults, kieProviderModuleRef } from "./options.js";
+import { kieProviderDefaults } from "./options.js";
 import { KieClient, kieAudioTrackUrls, kieLyricsVariations, kieResultUrls } from "./client.js";
 import { KieHttpError, KieServiceError, kieTaskFailure, safeKieReason } from "./errors.js";
 import { kieRouteForCapability, kieRoutes, kieCapabilityKey } from "./routes.js";
@@ -55,6 +51,22 @@ function failureMessage(error: unknown): string {
 function failure(error: unknown): EndpointOutcome {
   const code = error instanceof KieServiceError || error instanceof KieHttpError ? error.code : "KIE_ERROR";
   return { status: "failed", failure: { code, message: safeKieReason(failureMessage(error)) } };
+}
+
+/** Transport failures and retryable HTTP statuses return to the poll queue; everything else fails. */
+function retrying(
+  error: unknown, handle: CanonicalValue, pollIntervalMs: number, deadlineAt?: number,
+): EndpointOutcome | undefined {
+  const delay = error instanceof EndpointTransportError ? pollIntervalMs
+    : error instanceof EndpointHttpError && (error.status === 429 || error.status >= 500)
+      ? error.retryAfterMs ?? pollIntervalMs : undefined;
+  if (delay === undefined) return undefined;
+  const now = Date.now();
+  return {
+    status: "pending", handle,
+    wakeAt: Math.min(now + delay, deadlineAt ?? Number.MAX_SAFE_INTEGER),
+    progress: { phase: "retrying" },
+  };
 }
 
 /** Kie's remove-background contract: one image Resource, at most 5 MB in PNG/JPEG/WEBP. */
@@ -164,7 +176,10 @@ function endpointFactory(client: KieClient, pollIntervalMs: number, operationTim
         const urls = kieAudioTrackUrls(record) ?? kieResultUrls(record);
         return { status: "ready", handle: canonicalize({ ...handle, urls }), receipt };
       } catch (error) {
-        return pollAgainOrFail(error, { handle: context.handle, pollIntervalMs, failure });
+        const parsed = (context.handle ?? {}) as Partial<Handle>;
+        const deadlineAt = typeof parsed.startedAt === "number"
+          ? parsed.startedAt + operationTimeoutMs : undefined;
+        return retrying(error, context.handle, pollIntervalMs, deadlineAt) ?? failure(error);
       }
     },
     async collect(context) {
@@ -260,15 +275,14 @@ async function download(client: KieClient, key: string, url: string): Promise<{ 
   if (parsed.protocol !== "https:" && parsed.hostname !== "localhost" && parsed.hostname !== "127.0.0.1") {
     throw new KieServiceError("KIE_UNSAFE_ASSET_URL", "Kie assets must be served over HTTPS or loopback");
   }
-  const deadline = requestDeadline(client.timeoutMs, () => new EndpointTransportError("Kie asset download timed out"));
-  try {
-    const response = await deadline.wait(client.fetcher(parsed.href, { signal: deadline.signal }));
+  return await withRequestDeadline(client.timeoutMs, async ({ signal, wait }) => {
+    const response = await wait(client.fetcher(parsed.href, { signal }));
     if (!response.ok) throw new KieHttpError("KIE_HTTP_ASSET", `Kie asset returned HTTP ${response.status}`, response.status);
     return {
-      bytes: new Uint8Array(await deadline.wait(response.arrayBuffer())),
+      bytes: new Uint8Array(await wait(response.arrayBuffer())),
       mediaType: response.headers.get("content-type")?.split(";", 1)[0] ?? "application/octet-stream",
     };
-  } finally { deadline.finish(); }
+  }, () => new EndpointTransportError("Kie asset download timed out", { timeout: true }));
 }
 
 export function createKieProvider(options: CreateKieProviderOptions) {
@@ -278,9 +292,7 @@ export function createKieProvider(options: CreateKieProviderOptions) {
   const operationTimeoutMs = options.operationTimeoutMs ?? 15 * 60_000;
   const client = new KieClient(baseUrl, uploadBaseUrl, requestTimeoutMs, options.fetch ?? globalThis.fetch);
   const asyncEndpoint: AsyncEndpoint = endpointFactory(client, options.pollIntervalMs ?? 5_000, operationTimeoutMs);
-  return defineEndpointPackage({
-    module: kieProviderModuleRef,
-    facet: "kie",
+  return defineEndpoint({
     instance: options.instance ?? "kie.default",
     pool: options.pool ?? options.instance ?? "kie.default",
     pricing: { kind: "page", url: "https://kie.ai/pricing" },
@@ -292,7 +304,7 @@ export function createKieProvider(options: CreateKieProviderOptions) {
         summary: `Kie reports ${status} credit(s) remaining`,
       }];
     },
-    credentials: { apiKey: options.apiKey ?? credentialRef("platform", "kie.api-key") },
+    credentials: { apiKey: options.apiKey ?? credentialRef("local", "kie.api-key") },
     credentialInputs: { apiKey: { label: "Kie API key" } },
     defaultConcurrency: options.defaultConcurrency ?? 4,
     ...(options.actionLimits === undefined ? {} : { actionLimits: options.actionLimits }),
@@ -302,7 +314,7 @@ export function createKieProvider(options: CreateKieProviderOptions) {
         endpoint: asyncEndpoint, capacity: route.capability.name, supports: route.supports,
       })),
       {
-        capability: REMOVE_BACKGROUND_CAPABILITY, returns: artifactTypes.blob, lifecycle: "asynchronous" as const,
+        capability: REMOVE_BACKGROUND_CAPABILITY, returns: blobTypes.blob, lifecycle: "asynchronous" as const,
         endpoint: asyncEndpoint, capacity: "remove-background", supports: removeBackgroundSupport,
       },
       {

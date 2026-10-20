@@ -1,4 +1,4 @@
-import { defineExactModelModule } from "@hypit/model-kit";
+import { defineExactModelModule } from "@hypit/generation/model";
 import type { GenerationPortValue, GenerationRequest } from "@hypit/generation";
 
 import {
@@ -29,7 +29,7 @@ const sunoBaseDefinition = defineExactModelModule({
 });
 
 export const sunoEndpoints = sunoBaseDefinition.endpoints;
-export const sunoHostFacet = sunoBaseDefinition.hostFacet;
+export const sunoFacet = sunoBaseDefinition.facet;
 
 export function sealGenerateMusicRequest(
   ports: Readonly<Record<string, readonly GenerationPortValue[]>>,

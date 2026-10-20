@@ -6,9 +6,9 @@ import {
 import type {
   GenerationArtifactUrlResolver, GenerationRequest, GenerationWireMapping,
 } from "@hypit/generation";
-import { canonicalize } from "@hypit/protocol";
-import type { BlobRef, CapabilityRef, CanonicalValue, StoredValue, TypeRef } from "@hypit/protocol";
-import type { EndpointRequest, EndpointSupport } from "@hypit/endpoint-kit";
+import { canonicalize } from "@hypit/hypit/protocol";
+import type { BlobRef, CapabilityRef, CanonicalValue, StoredValue, TypeRef } from "@hypit/hypit/protocol";
+import type { EndpointRequest, EndpointSupport } from "@hypit/hypit/endpoint";
 import { kieMappings } from "./mapping.js";
 
 const MB = 1_000_000;

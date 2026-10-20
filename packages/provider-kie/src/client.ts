@@ -1,6 +1,7 @@
-import { EndpointHttpError, EndpointResponseError, EndpointTransportError, retryAfterMs, transport } from "@hypit/endpoint-kit";
-import { requestDeadline } from "@hypit/runtime-kit";
-import type { CanonicalValue } from "@hypit/protocol";
+import {
+  EndpointHttpError, EndpointResponseError, EndpointTransportError, retryAfterMs, withRequestDeadline,
+} from "@hypit/hypit/endpoint/http";
+import type { CanonicalValue } from "@hypit/hypit/protocol";
 import { KieHttpError, kieEnvelopeCodeName } from "./errors.js";
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -47,17 +48,15 @@ export class KieClient {
   ) {}
 
   private async request(path: string, key: string, init: RequestInit, subject: string): Promise<unknown> {
-    const deadline = requestDeadline(this.timeoutMs, () => new EndpointTransportError(`Kie ${subject} timed out`));
-    try {
-      const response = await transport(deadline.wait(this.fetcher(`${this.baseUrl}${path}`, {
+    return await withRequestDeadline(this.timeoutMs, async ({ signal, wait }) => {
+      const response = await wait(this.fetcher(`${this.baseUrl}${path}`, {
         ...init,
-        signal: deadline.signal,
+        signal,
         headers: { authorization: `Bearer ${key}`, ...(init.headers ?? {}) },
-      })));
+      }));
       if (!response.ok) throw this.httpFailure(response, init.method ?? "GET", path, subject);
-      const body = await transport(deadline.wait(response.json()));
-      return body;
-    } finally { deadline.finish(); }
+      return await wait(response.json());
+    }, () => new EndpointTransportError(`Kie ${subject} timed out`, { timeout: true }));
   }
 
   private httpFailure(response: Response, method: string, path: string, subject: string): EndpointHttpError {
@@ -112,17 +111,16 @@ export class KieClient {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ base64Data: Buffer.from(bytes).toString("base64"), uploadPath: "hypit/reference" }),
     };
-    const deadline = requestDeadline(this.timeoutMs, () => new EndpointTransportError("Kie file upload timed out"));
-    try {
-      const response = await transport(deadline.wait(this.fetcher(`${this.uploadBaseUrl}${path}`, {
-        ...init, signal: deadline.signal, headers: { authorization: `Bearer ${key}`, ...(init.headers ?? {}) },
-      })));
+    return await withRequestDeadline(this.timeoutMs, async ({ signal, wait }) => {
+      const response = await wait(this.fetcher(`${this.uploadBaseUrl}${path}`, {
+        ...init, signal, headers: { authorization: `Bearer ${key}`, ...(init.headers ?? {}) },
+      }));
       if (!response.ok) throw this.httpFailure(response, init.method ?? "POST", path, "Kie file upload");
-      const body = envelope(await transport(deadline.wait(response.json())), "Kie file upload");
+      const body = envelope(await wait(response.json()), "Kie file upload");
       const downloadUrl = text(object(body.data, "Kie upload result").downloadUrl, "Kie upload downloadUrl");
       try { new URL(downloadUrl); } catch { throw new EndpointResponseError("Kie upload returned no usable downloadUrl"); }
       return downloadUrl;
-    } finally { deadline.finish(); }
+    }, () => new EndpointTransportError("Kie file upload timed out", { timeout: true }));
   }
 }
 

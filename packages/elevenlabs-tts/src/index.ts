@@ -1,4 +1,4 @@
-import { defineExactModelModule } from "@hypit/model-kit";
+import { defineExactModelModule } from "@hypit/generation/model";
 import type { GenerationPortValue, GenerationRequest } from "@hypit/generation";
 
 import {
@@ -62,7 +62,7 @@ const elevenLabsTtsDefinition = defineExactModelModule({
 
 export const elevenLabsTtsEndpoints = elevenLabsTtsDefinition.endpoints;
 export const elevenLabsTtsComponent = elevenLabsTtsDefinition.component;
-export const elevenLabsTtsHostFacet = elevenLabsTtsDefinition.hostFacet;
+export const elevenLabsTtsFacet = elevenLabsTtsDefinition.facet;
 export const elevenLabsTtsManifest = elevenLabsTtsDefinition.manifest;
 
 const sealByModel = {

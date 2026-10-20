@@ -1,11 +1,15 @@
-import {
-  elevenLabsTtsComponent, elevenLabsTtsHostFacet, elevenLabsTtsManifest,
-} from "./index.js";
+import { createAdmissionPackageFacet } from "@hypit/hypit/admission";
+import { createProducerPackageFacet } from "@hypit/hypit/producer";
+
+import { elevenLabsTtsComponent, elevenLabsTtsFacet, elevenLabsTtsManifest } from "./index.js";
 
 export const hypitPackage = {
-  format: "hypit.node-package@1" as const,
+  format: "hypit.package@1" as const,
   modules: [{ manifest: elevenLabsTtsManifest }],
-  components: [elevenLabsTtsComponent],
-  hostFacets: [elevenLabsTtsHostFacet],
+  facets: [
+    createProducerPackageFacet(elevenLabsTtsComponent),
+    createAdmissionPackageFacet(elevenLabsTtsComponent),
+    elevenLabsTtsFacet,
+  ],
 };
 export default hypitPackage;

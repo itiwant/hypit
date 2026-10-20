@@ -1,4 +1,5 @@
-import { EndpointHttpError, EndpointServiceError } from "@hypit/endpoint-kit";
+import { EndpointServiceError } from "@hypit/hypit/endpoint";
+import { EndpointHttpError } from "@hypit/hypit/endpoint/http";
 
 /**
  * Kie's response envelopes and their documented meanings. Task and Common API pages agree on the

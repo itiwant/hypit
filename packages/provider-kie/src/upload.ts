@@ -1,5 +1,5 @@
 import type { GenerationArtifactUrlResolver } from "@hypit/generation";
-import type { EndpointInvocationContext } from "@hypit/endpoint-kit";
+import type { EndpointInvocationContext } from "@hypit/hypit/endpoint";
 import type { KieMediaLimits } from "./routes.js";
 import type { KieClient } from "./client.js";
 

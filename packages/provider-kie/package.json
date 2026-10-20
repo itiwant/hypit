@@ -1,30 +1,41 @@
 {
   "name": "@hypit/provider-kie",
-  "version": "0.0.0-dev",
+  "version": "0.2.0",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
-  "hypit": { "activation": "./src/activation.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "hypit": {
+    "activation": "./src/activation.ts"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "@hypit/hypit": "workspace:^0.3.1",
+    "@hypit/runtime-local": "workspace:^0.1.1"
+  },
   "dependencies": {
-    "@hypit/endpoint-kit": "workspace:*",
-    "@hypit/generation": "workspace:*",
-    "@hypit/protocol": "workspace:*",
-    "@hypit/runtime": "workspace:*",
-    "@hypit/runtime-kit": "workspace:*",
-    "@hypit/text": "workspace:*"
+    "@hypit/generation": "workspace:^0.1.0"
   },
   "devDependencies": {
-    "@hypit/artifact": "workspace:*",
-    "@hypit/background-removal": "workspace:*",
-    "@hypit/driver-node": "workspace:*",
     "@hypit/elevenlabs-tts": "workspace:*",
+    "@hypit/endpoint": "workspace:*",
+    "@hypit/executor": "workspace:*",
     "@hypit/gemini-tts": "workspace:*",
+    "@hypit/generation": "workspace:*",
     "@hypit/gpt-image": "workspace:*",
     "@hypit/grok-imagine": "workspace:*",
+    "@hypit/hypit": "workspace:*",
     "@hypit/minimax-h3": "workspace:*",
     "@hypit/nano-banana": "workspace:*",
     "@hypit/pixverse": "workspace:*",
+    "@hypit/protocol": "workspace:*",
+    "@hypit/runtime": "workspace:*",
+    "@hypit/runtime-local": "workspace:*",
     "@hypit/seedance": "workspace:*",
     "@hypit/seedream": "workspace:*",
     "@hypit/suno": "workspace:*",

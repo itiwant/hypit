@@ -1,6 +1,6 @@
-import type { ProducerHandlerContext } from "@hypit/component-kit";
-import type { CapabilityRef, ProducerRef } from "@hypit/protocol";
-import { textTypes, verifyText } from "@hypit/text";
+import type { ProducerHandlerContext } from "@hypit/hypit/producer";
+import type { CapabilityRef, ProducerRef } from "@hypit/hypit/protocol";
+import { textTypes, verifyText } from "@hypit/hypit/text";
 
 import { sunoModuleRef } from "./module.js";
 

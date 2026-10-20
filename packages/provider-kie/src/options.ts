@@ -1,4 +1,4 @@
-import type { CredentialRef } from "@hypit/runtime";
+import type { CredentialRef } from "@hypit/hypit/endpoint";
 
 export const kieProviderModuleRef = { name: "@hypit/provider-kie", version: "1" } as const;
 
@@ -31,7 +31,7 @@ export type CreateKieProviderOptions = {
   readonly uploadBaseUrl?: string;
   readonly apiKey: CredentialRef;
   readonly defaultConcurrency?: number;
-  readonly actionLimits?: import("@hypit/endpoint-kit").EndpointActionLimits;
+  readonly actionLimits?: import("@hypit/hypit/endpoint").EndpointActionLimits;
   readonly pollIntervalMs?: number;
   readonly requestTimeoutMs?: number;
   readonly operationTimeoutMs?: number;
